@@ -23,10 +23,6 @@ env/
 *.swo
 *.bak
 
-# Arquivos do Docker
-*.dockerfile
-Dockerfile*
-
 # Arquivos de dependências Python
 *.egg-info/
 .eggs/
