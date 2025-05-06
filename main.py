@@ -1,6 +1,5 @@
-
 import pandas as pd
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 
 # Carregar a base de dados
 df = pd.read_csv('tmdb_5000_movies.csv')
@@ -50,6 +49,32 @@ def calculate_similarity(movie1, movie2):
 
 # Criar aplicação Flask
 app = Flask(__name__)
+
+@app.route('/', methods=['GET', 'POST'])
+def homepage():
+    # Passa a lista de filmes para o template e ordena por título
+    movies = df[['id', 'title']].sort_values(by='title').to_dict(orient='records')
+    
+    recommendations = None
+    selected_movie_id = None
+
+    if request.method == 'POST':
+        # Obter o ID do filme selecionado
+        selected_movie_id = int(request.form['movie_id'])
+        
+        # Encontrar o filme na base de dados
+        movie = df[df['id'] == selected_movie_id].iloc[0]
+
+        # Calcular similaridade com todos os outros filmes
+        df['similarity'] = df.apply(lambda x: calculate_similarity(movie, x), axis=1)
+
+        # Excluir o próprio filme da lista de recomendações
+        recommendations = df[df['id'] != selected_movie_id]
+
+        # Obter as 5 principais recomendações
+        recommendations = recommendations.sort_values(by='similarity', ascending=False).head(5)[['title', 'similarity']].to_dict(orient='records')
+
+    return render_template('index.html', movies=movies, recommendations=recommendations, selected_movie_id=selected_movie_id)
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
